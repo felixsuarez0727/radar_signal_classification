@@ -1,106 +1,78 @@
-<<<<<<< HEAD
 # Radar Signal Classification Project
 
 ## Overview
-Este proyecto implementa un clasificador de señales de radar utilizando redes neuronales convolucionales (CNN) para identificar diferentes tipos de modulación y señales.
+This project implements a deep learning classifier for radar signal modulation recognition using Convolutional Neural Networks (CNN).
 
 ## Project Structure
 ```
 radar_signal_classification/
 │
-├── data/                  # Directorio para datasets
-├── src/                   # Código fuente principal
-│   ├── data_loader.py     # Carga y preprocesa datos
-│   ├── model.py           # Arquitectura del modelo
-│   ├── train.py           # Entrenamiento y validación cruzada
-│   └── utils.py           # Funciones de utilidad
-├── results/               # Resultados de entrenamiento
-│   ├── models/            # Modelos guardados
-│   ├── logs/              # Logs de entrenamiento
-│   └── plots/             # Visualizaciones
-├── notebooks/             # Cuadernos Jupyter para exploración
-├── requirements.txt       # Dependencias del proyecto
-└── main.py               # Punto de entrada principal
+├── data/                  # Directory for datasets
+├── src/                   # Source code
+│   ├── __init__.py        # Package initialization
+│   ├── data_loader.py     # Data loading and preprocessing
+│   ├── model.py           # Neural network model definition
+│   ├── train.py           # Training and evaluation logic
+│   └── utils.py           # Visualization and metrics utilities
+├── results/               # Training results
+│   ├── models/            # Saved model checkpoints
+│   ├── logs/              # Training logs and metrics
+│   └── plots/             # Visualization outputs
+├── main.py                # Main entry point
+├── requirements.txt       # Project dependencies
+└── README.md              # Project documentation
 ```
 
-## Instalación
+## Installation
 
-1. Clonar el repositorio
+1. Clone the repository
 ```bash
-git clone https://github.com/tu_usuario/radar_signal_classification.git
+git clone https://github.com/yourusername/radar_signal_classification.git
 cd radar_signal_classification
 ```
 
-2. Crear entorno virtual
+2. Create a virtual environment
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Instalar dependencias
+3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-## Uso
+## Usage
 
-### Entrenamiento del Modelo
+### Training the Model
 ```bash
-python main.py --dataset /ruta/a/tu/dataset.hdf5 --epochs 50 --batch_size 64
+python main.py --dataset /path/to/your/dataset.hdf5 \
+               --epochs 50 \
+               --batch_size 64 \
+               --cv_splits 5
 ```
 
-### Parámetros Opcionales
-- `--dataset`: Ruta al archivo HDF5
-- `--epochs`: Número de épocas de entrenamiento
-- `--batch_size`: Tamaño del lote
-- `--cv_splits`: Número de splits para validación cruzada
+### Parameters
+- `--dataset`: Path to HDF5 dataset
+- `--epochs`: Number of training epochs
+- `--batch_size`: Batch size for training
+- `--cv_splits`: Number of cross-validation splits
 
-## Resultados
-Los resultados se guardan automáticamente en el directorio `results/`:
-- Modelos entrenados en `results/models/`
-- Logs de entrenamiento en `results/logs/`
-- Gráficos y visualizaciones en `results/plots/`
+## Results
+Results are automatically saved in the `results/` directory:
+- Model checkpoints in `results/models/`
+- Training logs in `results/logs/`
+- Visualization plots in `results/plots/`
 
-## Requisitos del Sistema
+## Model Architecture
+- 1D Convolutional Neural Network
+- Multiple convolutional layers with batch normalization
+- Dropout for regularization
+- Softmax output layer for multi-class classification
+
+## Requirements
 - Python 3.8+
-- GPU recomendada para entrenamiento rápido
+- GPU recommended for faster training
 
-## Contribuciones
-Las contribuciones son bienvenidas. Por favor, abre un issue o un pull request.
-
-## Licencia
-[Especifica tu licencia]
-```
-
-## Preparación Final
-
-Para preparar completamente el proyecto:
-
-1. Crea la estructura de directorios
-```bash
-mkdir -p radar_signal_classification/data
-mkdir -p radar_signal_classification/src
-mkdir -p radar_signal_classification/results/{models,logs,plots}
-mkdir -p radar_signal_classification/notebooks
-```
-
-2. Guarda cada archivo en su ubicación correspondiente
-
-3. Copia tu archivo HDF5 a `data/`
-
-## Ejecución
-
-1. Navega al directorio del proyecto
-```bash
-cd radar_signal_classification
-```
-
-2. Ejecuta el script principal
-```bash
-python main.py
-```
-
-
-=======
-# radar_signal_classification
->>>>>>> 926c7a51012297528f9a9be66a696323fbeb628e
+## Contributing
+Contributions are welcome. Please open an issue or submit a pull request.
