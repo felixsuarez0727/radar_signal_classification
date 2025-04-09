@@ -9,7 +9,7 @@ from sklearn.metrics import (
     classification_report
 )
 
-from src.model import RadarSignalClassifier
+from src.model import ImprovedRadarSignalClassifier as RadarSignalClassifier
 
 class ModelTrainer:
     def __init__(self, data_loader):
