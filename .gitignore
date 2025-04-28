@@ -1,0 +1,46 @@
+# Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entornos virtuales
+venv/
+ENV/
+env/
+*.env
+
+# Archivos de configuración del IDE
+.vscode/
+.idea/
+
+# Archivos de log
+*.log
+
+# Archivos de bases de datos
+*.sqlite3
+
+# Archivos de configuraciones de sistema
+.DS_Store
+
+# Archivos de caché
+*.pkl
+*.h5
+
+# Archivos temporales
+*.swp
+*.bak
+*.tmp
+
+# Archivos generados por Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Dependencias
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Archivos de lock (dependencias)
+Pipfile.lock
+poetry.lock
