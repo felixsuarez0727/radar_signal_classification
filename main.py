@@ -4,7 +4,6 @@ import traceback
 import time
 import logging
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s: %(message)s',
@@ -19,63 +18,48 @@ def main():
     """
     Main entry point for radar signal classification
     """
-    # Argument parsing with improved error handling
+    # Parse command line arguments
     parser = argparse.ArgumentParser(description='Radar Signal Classification')
-    parser.add_argument(
-        '--dataset', 
-        type=str, 
-        required=True,  
-        help='Path to HDF5 dataset'
-    )
-    parser.add_argument(
-        '--epochs', 
-        type=int, 
-        default=50, 
-        help='Number of training epochs (default: 50)'
-    )
-    parser.add_argument(
-        '--batch_size', 
-        type=int, 
-        default=64, 
-        help='Training batch size (default: 64)'
-    )
-    parser.add_argument(
-        '--cv_splits', 
-        type=int, 
-        default=5, 
-        help='Number of cross-validation splits (default: 5)'
-    )
+    parser.add_argument('--dataset', type=str, required=True, help='Path to HDF5 dataset')
+    parser.add_argument('--data_percentage', type=float, default=0.2, help='Percentage of data to use (0.0 to 1.0)')
+    parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
+    parser.add_argument('--batch_size', type=int, default=32, help='Training batch size')
+    parser.add_argument('--cv_splits', type=int, default=5, help='Number of cross-validation splits')
+    parser.add_argument('--samples_per_class', type=int, default=25, help='Number of samples to select per class')
+    args = parser.parse_args()
+    
+    # Start timing
+    start_time = time.time()
+    
+    logging.info("Starting Radar Signal Classification")
+    logging.info("----------------------------------------")
+    logging.info(f"Dataset: {args.dataset}")
+    logging.info(f"Epochs: {args.epochs}")
+    logging.info(f"Batch Size: {args.batch_size}")
+    logging.info(f"Cross-Validation Splits: {args.cv_splits}")
+    logging.info(f"Data Percentage: {args.data_percentage*100:.1f}%")
+    logging.info(f"Samples per Class: {args.samples_per_class}")
+    logging.info(f"Stratified Sampling: True")
+    logging.info("----------------------------------------")
     
     try:
-        # Parse arguments
-        args = parser.parse_args()
-        
-        logging.info("Starting Radar Signal Classification")
-        logging.info("-" * 40)
-        logging.info(f"Dataset: {args.dataset}")
-        logging.info(f"Epochs: {args.epochs}")
-        logging.info(f"Batch Size: {args.batch_size}")
-        logging.info(f"Cross-Validation Splits: {args.cv_splits}")
-        logging.info("-" * 40)
-        
-        # Start timing
-        start_time = time.time()
-        
         # Initialize data loader
+        data_loader = DataLoader(
+            dataset_path=args.dataset,
+            data_percentage=args.data_percentage,
+            stratified=True,
+            samples_per_class=args.samples_per_class
+        )
+        
+        # Load data and get train/test split
         logging.info("Loading dataset...")
-        data_loader = DataLoader(args.dataset)
+        X_train, X_test, y_train, y_test = data_loader.load_data()
         
-        # Verify data loading
-        X, y = data_loader.load_data()
-        logging.info(f"Dataset loaded. Total samples: {len(X)}")
-        logging.info(f"Signal shape: {X.shape}")
-        logging.info(f"Number of classes: {len(set(y))}")
-        
-        # Create trainer
+        # Initialize model trainer
         logging.info("Initializing model trainer...")
         trainer = ModelTrainer(data_loader)
         
-        # Perform training and evaluation
+        # Train and evaluate model
         logging.info("Starting training process...")
         results = trainer.train_and_evaluate(
             epochs=args.epochs,
@@ -83,32 +67,21 @@ def main():
             cv_splits=args.cv_splits
         )
         
-        # Visualize results
+        # Generate visualizations
         logging.info("Generating visualizations...")
         visualizer = ResultsVisualizer()
+        visualizer.plot_training_history(results['history'])
+        visualizer.plot_confusion_matrix(results['confusion_matrix'], results['class_names'])
+        visualizer.save_classification_metrics(results['metrics'])
+
+        visualizer.plot_signal_examples(data_loader.X, data_loader.y_encoded, data_loader.class_names)
+        visualizer.plot_class_distribution(data_loader.y_encoded, data_loader.class_names)
         
-        # Plot training history
-        logging.info("Plotting training history...")
-        visualizer.plot_training_history(results.get('history', {}))
-        
-        # Plot confusion matrix
-        logging.info("Plotting confusion matrix...")
-        visualizer.plot_confusion_matrix(
-            results.get('confusion_matrix', None), 
-            results.get('class_names', [])
-        )
-        
-        # Save classification metrics
-        logging.info("Saving classification metrics...")
-        visualizer.save_classification_metrics(results.get('metrics', {}))
-        
-        # End timing
-        end_time = time.time()
-        
+        # Print final results
         logging.info("\nTraining completed successfully!")
-        logging.info(f"Total Execution Time: {end_time - start_time:.2f} seconds")
-        logging.info(f"Mean Accuracy: {results.get('mean_accuracy', 0):.4f} ± {results.get('std_accuracy', 0):.4f}")
-    
+        logging.info(f"Total Execution Time: {time.time() - start_time:.2f} seconds")
+        logging.info(f"Mean Accuracy: {results['mean_accuracy']:.4f} ± {results['std_accuracy']:.4f}")
+        
     except Exception as e:
         logging.error("\n!! ERROR OCCURRED !!")
         logging.error(f"Error Type: {type(e).__name__}")

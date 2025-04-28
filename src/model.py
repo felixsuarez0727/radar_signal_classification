@@ -26,62 +26,27 @@ class ImprovedRadarSignalClassifier:
             tf.keras.Model: Compiled neural network model
         """
         model = Sequential([
-            # Input Layer with Regularization
             Input(shape=self.input_shape),
-            
-            # First Convolutional Block with Advanced Regularization
+            # Solo una capa convolucional muy regularizada
             Conv1D(
-                filters=64, 
+                filters=16, 
                 kernel_size=3, 
                 activation='relu',
-                kernel_regularizer=regularizers.l2(0.001),
+                kernel_regularizer=regularizers.l2(0.01),
                 padding='same'
             ),
             BatchNormalization(),
             MaxPooling1D(pool_size=2),
-            Dropout(0.3),
-            
-            # Second Convolutional Block
-            Conv1D(
-                filters=128, 
-                kernel_size=3, 
-                activation='relu',
-                kernel_regularizer=regularizers.l2(0.001),
-                padding='same'
-            ),
-            BatchNormalization(),
-            MaxPooling1D(pool_size=2),
-            Dropout(0.4),
-            
-            # Third Convolutional Block
-            Conv1D(
-                filters=256, 
-                kernel_size=3, 
-                activation='relu',
-                kernel_regularizer=regularizers.l2(0.001),
-                padding='same'
-            ),
-            BatchNormalization(),
+            Dropout(0.7),
             GlobalAveragePooling1D(),
-            
-            # Fully Connected Layers with Advanced Regularization
+            # Solo una capa densa pequeña
             Dense(
-                256, 
+                16, 
                 activation='relu',
-                kernel_regularizer=regularizers.l1_l2(l1=0.0001, l2=0.0001)
+                kernel_regularizer=regularizers.l2(0.01)
             ),
             BatchNormalization(),
-            Dropout(0.5),
-            
-            Dense(
-                128, 
-                activation='relu',
-                kernel_regularizer=regularizers.l1_l2(l1=0.0001, l2=0.0001)
-            ),
-            BatchNormalization(),
-            Dropout(0.4),
-            
-            # Output Layer with Softmax
+            Dropout(0.7),
             Dense(
                 self.num_classes, 
                 activation='softmax'
@@ -89,15 +54,7 @@ class ImprovedRadarSignalClassifier:
         ])
         
         # Advanced Compilation with Learning Rate Scheduling
-        initial_learning_rate = 0.001
-        lr_schedule = optimizers.schedules.ExponentialDecay(
-            initial_learning_rate,
-            decay_steps=100,
-            decay_rate=0.96,
-            staircase=True
-        )
-        
-        optimizer = optimizers.Adam(learning_rate=lr_schedule)
+        optimizer = optimizers.Adam(learning_rate=0.001)
         
         model.compile(
             optimizer=optimizer,

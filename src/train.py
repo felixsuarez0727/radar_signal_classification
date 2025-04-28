@@ -2,14 +2,20 @@ import os
 import time
 import numpy as np
 import logging
-from tqdm import tqdm  # Librería para barras de progreso
+from tqdm import tqdm  
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import (
     confusion_matrix, 
     classification_report
 )
 
-from src.model import ImprovedRadarSignalClassifier as RadarSignalClassifier
+# Try to import the TensorFlow model, but fall back to the alternative
+try:
+    from src.model import ImprovedRadarSignalClassifier as RadarSignalClassifier
+    logging.info("Using TensorFlow-based model")
+except ImportError:
+    from src.model_alternative import SimpleRadarSignalClassifier as RadarSignalClassifier
+    logging.info("Using scikit-learn-based model (TensorFlow not available)")
 
 class ModelTrainer:
     def __init__(self, data_loader):
@@ -49,14 +55,13 @@ class ModelTrainer:
         # Global start time
         global_start_time = time.time()
         
-        # Load data
-        logging.info("Preparing data for cross-validation")
-        X, y = self.data_loader.load_data()
+        # Use data that was already loaded by the DataLoader
+        X, y = self.data_loader.X, self.data_loader.y_encoded
         
         # Validate data
         if X is None or y is None:
-            logging.error("Failed to load data for training")
-            raise ValueError("Data loading failed")
+            logging.error("Data not available in DataLoader. Loading data...")
+            X, y = self.data_loader.load_data()
         
         logging.info(f"Total samples: {len(X)}")
         logging.info(f"Sample shape: {X.shape}")
@@ -134,34 +139,56 @@ class ModelTrainer:
             cv_results['accuracies'].append(test_accuracy)
             cv_results['losses'].append(test_loss)
             cv_results['detailed_reports'].append(report)
-            cv_results['histories'].append(history.history)
+            
+            # Handle different history formats (TensorFlow vs. scikit-learn)
+            if hasattr(history, 'history'):
+                cv_results['histories'].append(history.history)
+            else:
+                cv_results['histories'].append(history.get('history', {}))
+                
             cv_results['confusion_matrices'].append(cm)
             
-            # Update cross-validation progress
+            # Update progress bar
             cv_progress.update(1)
         
         # Close progress bar
         cv_progress.close()
         
-        # Global completion time
-        global_end_time = time.time()
-        total_time = global_end_time - global_start_time
+        # Calculate overall metrics
+        mean_accuracy = np.mean(cv_results['accuracies'])
+        std_accuracy = np.std(cv_results['accuracies'])
         
-        # Aggregate results
-        final_results = {
+        # Aggregate confusion matrices
+        combined_cm = np.sum(cv_results['confusion_matrices'], axis=0)
+        
+        # Compute average history
+        avg_history = {}
+        try:
+            for metric in cv_results['histories'][0].keys():
+                # For each metric, compute the average across all folds
+                avg_history[metric] = np.mean([h[metric] for h in cv_results['histories']], axis=0)
+        except (KeyError, AttributeError, IndexError) as e:
+            logging.warning(f"Could not compute average history: {e}")
+            # Fallback to empty history
+            avg_history = {'accuracy': [], 'val_accuracy': []}
+        
+        # Format results for return
+        results = {
             'accuracies': cv_results['accuracies'],
-            'mean_accuracy': np.mean(cv_results['accuracies']),
-            'std_accuracy': np.std(cv_results['accuracies']),
-            'total_training_time': total_time,
-            'history': cv_results['histories'][-1],  # Use last fold's history
-            'metrics': cv_results['detailed_reports'][-1],
-            'confusion_matrix': cv_results['confusion_matrices'][-1],
-            'class_names': self.data_loader.get_class_names()
+            'mean_accuracy': mean_accuracy,
+            'std_accuracy': std_accuracy,
+            'confusion_matrix': combined_cm,
+            'detailed_reports': cv_results['detailed_reports'],
+            'history': avg_history,
+            'class_names': self.data_loader.get_class_names(),
+            'metrics': {
+                'accuracy': f"{mean_accuracy:.4f} ± {std_accuracy:.4f}",
+                'reports': cv_results['detailed_reports']
+            }
         }
         
-        # Log summary
-        logging.info("\n--- Training Summary ---")
-        logging.info(f"Total Training Time: {total_time:.2f} seconds")
-        logging.info(f"Mean Accuracy: {final_results['mean_accuracy']:.4f} ± {final_results['std_accuracy']:.4f}")
+        # Calculate total execution time
+        total_time = time.time() - global_start_time
+        logging.info(f"Total CV execution time: {total_time:.2f} seconds")
         
-        return final_results
+        return results
